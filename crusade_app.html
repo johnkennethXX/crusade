@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Crusade Register" />
+<title>Crusade Attendance</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  html, body { margin:0; padding:0; background:#EFE7D3; }
+  * { box-sizing: border-box; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef } = React;
+
+/* ---------------------------------------------------------
+   SIMPLE INLINE ICONS (no external icon library needed)
+--------------------------------------------------------- */
+function Icon({ size = 18, color = "currentColor", children }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      {children}
+    </svg>
+  );
+}
+const Plus = (p) => <Icon {...p}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></Icon>;
+const X = (p) => <Icon {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></Icon>;
+const Check = (p) => <Icon {...p}><polyline points="20 6 9 17 4 12"/></Icon>;
+const ChevronLeft = (p) => <Icon {...p}><polyline points="15 18 9 12 15 6"/></Icon>;
+const Trash2 = (p) => <Icon {...p}><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></Icon>;
+const Pencil = (p) => <Icon {...p}><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></Icon>;
+const Calendar = (p) => <Icon {...p}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></Icon>;
+const Users = (p) => <Icon {...p}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></Icon>;
+const ArrowUpDown = (p) => <Icon {...p}><path d="M21 16l-4 4-4-4"/><path d="M17 20V4"/><path d="M3 8l4-4 4 4"/><path d="M7 4v16"/></Icon>;
+const Save = (p) => <Icon {...p}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></Icon>;
+const UserCircle2 = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.66V19a4 4 0 0 1 4-4h2a4 4 0 0 1 4 4v1.66"/></Icon>;
+const Flame = (p) => <Icon {...p}><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></Icon>;
+const Sparkles = (p) => <Icon {...p}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></Icon>;
+const RotateCw = (p) => <Icon {...p}><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></Icon>;
+const Gift = (p) => <Icon {...p}><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></Icon>;
+const Search = (p) => <Icon {...p}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></Icon>;
+const Download = (p) => <Icon {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></Icon>;
+const Upload = (p) => <Icon {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></Icon>;
+const AlertTriangle = (p) => <Icon {...p}><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></Icon>;
+
+/* ---------------------------------------------------------
+   THEME TOKENS — "Revival Ledger"
+--------------------------------------------------------- */
+const T = {
+  ink: "#1E2A42", inkSoft: "#3A4A66", parchment: "#F6F1E4", parchmentDark: "#EFE7D3",
+  card: "#FFFDF8", gold: "#C9932F", goldDeep: "#A9781F", maroon: "#8A2E2E", maroonDeep: "#732424",
+  line: "#DED2B8", muted: "#948A76",
+  kid: "#3B7DD8", kidLight: "#6FA8E9", kidBg: "#E9F1FC", kidBorder: "#BFD8F7",
+  adult: "#2F9E5C", adultLight: "#5DBE86", adultBg: "#E9F7EF", adultBorder: "#BCE6CE",
+  white: "#FFFFFF",
+};
+const displayFont = "'Fraunces', Georgia, serif";
+const bodyFont = "'Inter', system-ui, sans-serif";
+
+/* ---------------------------------------------------------
+   HELPERS
+--------------------------------------------------------- */
+let idCounter = 1000;
+const uid = () => `id_${idCounter++}_${Math.random().toString(36).slice(2, 7)}`;
+function toDateObj(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); }
+function fmtShort(s) { return toDateObj(s).toLocaleDateString(undefined, { month: "short", day: "numeric" }); }
+function fmtLong(s) { return toDateObj(s).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }); }
+function isoToday() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
+function addDays(dateStr, n) { const d = toDateObj(dateStr); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; }
+function daysBetweenInclusive(start, end) { const s = toDateObj(start), e = toDateObj(end); return Math.round((e - s) / 86400000) + 1; }
+function getDayList(crusade) { const n = Math.max(1, daysBetweenInclusive(crusade.startDate, crusade.endDate)); return Array.from({ length: n }, (_, i) => addDays(crusade.startDate, i)); }
+const DEFAULT_KIDS_AGE_LIMIT = 12;
+const isKid = (age, limit = DEFAULT_KIDS_AGE_LIMIT) => Number(age) <= Number(limit);
+function polarPoint(cx, cy, r, angleDeg) { const rad = (angleDeg * Math.PI) / 180; return { x: cx + r * Math.sin(rad), y: cy - r * Math.cos(rad) }; }
+
+/* ---------------------------------------------------------
+   SEED DATA
+--------------------------------------------------------- */
+function seedData() {
+  const today = isoToday();
+  const crusadeId = uid();
+  const crusade = { id: crusadeId, name: "Citywide Harvest Crusade", startDate: addDays(today, -1), endDate: addDays(today, 1), kidsAgeLimit: 12 };
+  const days = getDayList(crusade);
+  const mk = (name, age, sex, marks) => ({ id: uid(), crusadeId, name, age, sex, attendance: days.reduce((acc, d, i) => ({ ...acc, [d]: !!marks[i] }), {}) });
+  const attendees = [
+    mk("Amara Johnson", 34, "F", [true, true, false]), mk("Brian Cole", 45, "M", [true, true, false]),
+    mk("Chidi Okafor", 9, "M", [true, false, false]), mk("Diana Reyes", 15, "F", [true, true, false]),
+    mk("Elijah Santos", 7, "M", [false, true, false]), mk("Faith Nakamura", 29, "F", [true, true, false]),
+    mk("Grace Owusu", 12, "F", [true, true, false]), mk("Henry Park", 61, "M", [false, false, false]),
+  ];
+  return { crusades: [crusade], attendees };
+}
+
+/* ---------------------------------------------------------
+   ROOT APP
+--------------------------------------------------------- */
+function CrusadeAttendanceApp() {
+  const seeded = useMemo(seedData, []);
+  const [crusades, setCrusades] = useState(seeded.crusades);
+  const [attendees, setAttendees] = useState(seeded.attendees);
+  const [view, setView] = useState("list");
+  const [activeCrusadeId, setActiveCrusadeId] = useState(null);
+  const [editingCrusadeId, setEditingCrusadeId] = useState(null);
+  const [editingAttendeeId, setEditingAttendeeId] = useState(null);
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [sortMode, setSortMode] = useState("name");
+  const [groupFilter, setGroupFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [confirmDeleteCrusade, setConfirmDeleteCrusade] = useState(null);
+  const [confirmDeleteAttendee, setConfirmDeleteAttendee] = useState(null);
+  const [raffleState, setRaffleState] = useState({});
+  const [raffleOpen, setRaffleOpen] = useState(false);
+
+  const raffleKey = (crusadeId, day) => `${crusadeId}::${day}`;
+  function getRaffle(crusadeId, day) { return raffleState[raffleKey(crusadeId, day)] || { allowKids: true, allowRepeat: false, winners: [] }; }
+  function updateRaffle(crusadeId, day, patch) {
+    const key = raffleKey(crusadeId, day);
+    setRaffleState((rs) => ({ ...rs, [key]: { ...(rs[key] || { allowKids: true, allowRepeat: false, winners: [] }), ...patch } }));
+  }
+
+  const fileInputRef = useRef(null);
+  const [importPending, setImportPending] = useState(null);
+  const [importError, setImportError] = useState("");
+
+  function exportData() {
+    const payload = { app: "crusade-attendance-records", version: 1, exportedAt: new Date().toISOString(), crusades, attendees, raffleState };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `crusade-records-${isoToday()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+  function triggerImport() { setImportError(""); fileInputRef.current?.click(); }
+  function handleImportFile(e) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!Array.isArray(data.crusades) || !Array.isArray(data.attendees)) throw new Error("bad format");
+        setImportPending(data); setImportError("");
+      } catch (err) {
+        setImportError("That file doesn't look like a valid crusade records export.");
+        setImportPending(null);
+      }
+    };
+    reader.onerror = () => setImportError("Couldn't read that file. Please try again.");
+    reader.readAsText(file);
+  }
+  function confirmImportReplace() {
+    if (!importPending) return;
+    setCrusades(importPending.crusades);
+    setAttendees(importPending.attendees);
+    setRaffleState(importPending.raffleState || {});
+    setActiveCrusadeId(null); setView("list"); setImportPending(null);
+  }
+  function confirmImportMerge() {
+    if (!importPending) return;
+    const idMap = {};
+    const newCrusades = importPending.crusades.map((c) => { const newId = uid(); idMap[c.id] = newId; return { ...c, id: newId }; });
+    const newAttendees = importPending.attendees.filter((a) => idMap[a.crusadeId]).map((a) => ({ ...a, id: uid(), crusadeId: idMap[a.crusadeId] }));
+    setCrusades((cs) => [...cs, ...newCrusades]);
+    setAttendees((as) => [...as, ...newAttendees]);
+    setImportPending(null);
+  }
+  function cancelImport() { setImportPending(null); setImportError(""); }
+
+  const activeCrusade = crusades.find((c) => c.id === activeCrusadeId) || null;
+  const editingCrusade = crusades.find((c) => c.id === editingCrusadeId) || null;
+  const editingAttendee = attendees.find((a) => a.id === editingAttendeeId) || null;
+
+  function saveCrusade(data) {
+    if (editingCrusadeId) { setCrusades((cs) => cs.map((c) => (c.id === editingCrusadeId ? { ...c, ...data } : c))); }
+    else { const newC = { id: uid(), ...data }; setCrusades((cs) => [...cs, newC]); }
+    setEditingCrusadeId(null); setView("list");
+  }
+  function deleteCrusade(id) {
+    setCrusades((cs) => cs.filter((c) => c.id !== id));
+    setAttendees((as) => as.filter((a) => a.crusadeId !== id));
+    setConfirmDeleteCrusade(null);
+    if (activeCrusadeId === id) { setActiveCrusadeId(null); setView("list"); }
+  }
+  function saveAttendee(data) {
+    if (editingAttendeeId) { setAttendees((as) => as.map((a) => (a.id === editingAttendeeId ? { ...a, ...data } : a))); }
+    else {
+      const days = getDayList(activeCrusade);
+      const attendance = days.reduce((acc, d) => ({ ...acc, [d]: false }), {});
+      const newA = { id: uid(), crusadeId: activeCrusadeId, attendance, ...data };
+      setAttendees((as) => [...as, newA]);
+    }
+    setEditingAttendeeId(null); setView("detail");
+  }
+  function deleteAttendee(id) { setAttendees((as) => as.filter((a) => a.id !== id)); setConfirmDeleteAttendee(null); }
+  function toggleAttendance(attendeeId, day) {
+    setAttendees((as) => as.map((a) => (a.id === attendeeId ? { ...a, attendance: { ...a.attendance, [day]: !a.attendance[day] } } : a)));
+  }
+  function openCrusadeDetail(crusadeId) {
+    setActiveCrusadeId(crusadeId);
+    const c = crusades.find((x) => x.id === crusadeId);
+    const days = getDayList(c);
+    const today = isoToday();
+    setSelectedDay(days.includes(today) ? today : days[0]);
+    setSortMode("name"); setGroupFilter("all"); setSearchQuery(""); setView("detail");
+  }
+
+  return (
+    <div style={{ fontFamily: bodyFont, background: T.parchmentDark, minHeight: "100vh", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
+      <input ref={fileInputRef} type="file" accept="application/json,.json" onChange={handleImportFile} style={{ display: "none" }} />
+      <div style={{ width: "min(430px, 100%)", height: "min(780px, 92vh)", background: T.parchment, borderRadius: "28px", boxShadow: "0 20px 50px -12px rgba(30,42,66,0.35), 0 0 0 8px #14192666", overflow: "hidden", display: "flex", flexDirection: "column", position: "relative" }}>
+        {view === "list" && (
+          <CrusadeList crusades={crusades} attendees={attendees} onOpen={openCrusadeDetail}
+            onAdd={() => { setEditingCrusadeId(null); setView("crusadeForm"); }}
+            onEdit={(id) => { setEditingCrusadeId(id); setView("crusadeForm"); }}
+            askDelete={setConfirmDeleteCrusade} confirmId={confirmDeleteCrusade} doDelete={deleteCrusade}
+            onExport={exportData} onImportClick={triggerImport} importPending={importPending} importError={importError}
+            onConfirmReplace={confirmImportReplace} onConfirmMerge={confirmImportMerge} onCancelImport={cancelImport} />
+        )}
+        {view === "crusadeForm" && (
+          <CrusadeForm initial={editingCrusade} onCancel={() => { setEditingCrusadeId(null); setView("list"); }} onSave={saveCrusade} />
+        )}
+        {view === "detail" && activeCrusade && (
+          <CrusadeDetail crusade={activeCrusade} attendees={attendees.filter((a) => a.crusadeId === activeCrusadeId)}
+            selectedDay={selectedDay} setSelectedDay={setSelectedDay} sortMode={sortMode} setSortMode={setSortMode}
+            groupFilter={groupFilter} setGroupFilter={setGroupFilter}
+            searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+            onBack={() => { setView("list"); setActiveCrusadeId(null); }}
+            onEditCrusade={() => { setEditingCrusadeId(activeCrusadeId); setView("crusadeForm"); }}
+            onAddAttendee={() => { setEditingAttendeeId(null); setView("attendeeForm"); }}
+            onEditAttendee={(id) => { setEditingAttendeeId(id); setView("attendeeForm"); }}
+            onToggle={toggleAttendance} confirmDeleteAttendee={confirmDeleteAttendee}
+            askDeleteAttendee={setConfirmDeleteAttendee} doDeleteAttendee={deleteAttendee}
+            raffle={getRaffle(activeCrusadeId, selectedDay)} onOpenRaffle={() => setRaffleOpen(true)} />
+        )}
+        {view === "attendeeForm" && activeCrusade && (
+          <AttendeeForm initial={editingAttendee} crusade={activeCrusade}
+            onCancel={() => { setEditingAttendeeId(null); setView("detail"); }} onSave={saveAttendee} />
+        )}
+        {raffleOpen && activeCrusade && (
+          <RaffleModal crusade={activeCrusade} attendees={attendees.filter((a) => a.crusadeId === activeCrusadeId)}
+            selectedDay={selectedDay} raffle={getRaffle(activeCrusadeId, selectedDay)}
+            updateRaffle={(patch) => updateRaffle(activeCrusadeId, selectedDay, patch)} onClose={() => setRaffleOpen(false)} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------
+   RIBBON HEADER
+--------------------------------------------------------- */
+function Ribbon({ eyebrow, title, onBack, right }) {
+  return (
+    <div style={{ position: "relative", background: T.ink, padding: "18px 18px 22px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        {onBack && (
+          <button onClick={onBack} aria-label="Back" style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "10px", padding: "6px", color: T.parchment, cursor: "pointer", display: "flex" }}>
+            <ChevronLeft size={20} />
+          </button>
+        )}
+        <div style={{ flex: 1 }}>
+          {eyebrow && (
+            <div style={{ color: T.gold, fontSize: "11px", letterSpacing: "0.14em", fontWeight: 700, textTransform: "uppercase", display: "flex", alignItems: "center", gap: "6px" }}>
+              <Flame size={12} /> {eyebrow}
+            </div>
+          )}
+          <div style={{ color: T.white, fontFamily: displayFont, fontWeight: 600, fontSize: title.length > 22 ? "19px" : "23px", lineHeight: 1.15, marginTop: "2px" }}>{title}</div>
+        </div>
+        {right}
+      </div>
+      <div style={{ position: "absolute", left: 0, right: 0, bottom: "-1px", height: "10px", backgroundImage: `radial-gradient(circle at 8px 0, transparent 6px, ${T.ink} 6.5px)`, backgroundSize: "16px 12px", backgroundPosition: "0 -6px" }} />
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------
+   CRUSADE LIST
+--------------------------------------------------------- */
+function CrusadeList({ crusades, attendees, onOpen, onAdd, onEdit, askDelete, confirmId, doDelete, onExport, onImportClick, importPending, importError, onConfirmReplace, onConfirmMerge, onCancelImport }) {
+  return (
+    <>
+      <Ribbon eyebrow="Field Register" title="Crusades"
+        right={
+          <div style={{ display: "flex", gap: "6px" }}>
+            <button onClick={onExport} aria-label="Export records" style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "10px", padding: "7px", color: T.parchment, cursor: "pointer", display: "flex" }}><Download size={16} /></button>
+            <button onClick={onImportClick} aria-label="Import records" style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "10px", padding: "7px", color: T.parchment, cursor: "pointer", display: "flex" }}><Upload size={16} /></button>
+          </div>
+        } />
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+        {importError && (
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", background: "#FBEAEA", border: "1px solid #E3B8B8", borderRadius: "12px", padding: "12px 14px", marginBottom: "14px" }}>
+            <AlertTriangle size={16} color={T.maroon} style={{ flexShrink: 0, marginTop: "1px" }} />
+            <div style={{ fontSize: "12.5px", color: T.maroonDeep }}>{importError}</div>
+          </div>
+        )}
+        {importPending && (
+          <div style={{ background: T.card, border: `1px solid ${T.gold}`, borderRadius: "14px", padding: "14px", marginBottom: "14px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <Upload size={16} color={T.gold} />
+              <div style={{ fontFamily: displayFont, fontWeight: 600, fontSize: "15px", color: T.ink }}>Import records</div>
+            </div>
+            <div style={{ fontSize: "12.5px", color: T.muted, marginBottom: "12px" }}>
+              File contains <strong style={{ color: T.ink }}>{importPending.crusades.length}</strong> crusade{importPending.crusades.length !== 1 ? "s" : ""} and{" "}
+              <strong style={{ color: T.ink }}>{importPending.attendees.length}</strong> attendee{importPending.attendees.length !== 1 ? "s" : ""}.
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <button onClick={onConfirmMerge} style={{ background: T.ink, color: T.white, border: "none", borderRadius: "9px", padding: "9px 0", fontSize: "12.5px", fontWeight: 700, cursor: "pointer" }}>Add to existing records</button>
+              <button onClick={onConfirmReplace} style={{ background: T.maroon, color: T.white, border: "none", borderRadius: "9px", padding: "9px 0", fontSize: "12.5px", fontWeight: 700, cursor: "pointer" }}>Replace all current records</button>
+              <button onClick={onCancelImport} style={{ background: "transparent", border: `1px solid ${T.line}`, color: T.muted, borderRadius: "9px", padding: "9px 0", fontSize: "12.5px", cursor: "pointer" }}>Cancel</button>
+            </div>
+          </div>
+        )}
+        {crusades.length === 0 && (
+          <div style={{ textAlign: "center", padding: "60px 20px", color: T.muted }}>
+            <Calendar size={36} style={{ margin: "0 auto 10px", opacity: 0.5 }} />
+            <div style={{ fontFamily: displayFont, fontSize: "17px", color: T.ink, marginBottom: "4px" }}>No crusades yet</div>
+            <div style={{ fontSize: "13px" }}>Tap the + button to schedule your first crusade.</div>
+          </div>
+        )}
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          {crusades.map((c) => {
+            const list = attendees.filter((a) => a.crusadeId === c.id);
+            const kids = list.filter((a) => isKid(a.age, c.kidsAgeLimit)).length;
+            const adults = list.length - kids;
+            const days = getDayList(c);
+            return (
+              <div key={c.id} style={{ background: T.card, border: `1px solid ${T.line}`, borderRadius: "16px", padding: "14px 16px", boxShadow: "0 1px 2px rgba(30,42,66,0.06)" }}>
+                <div onClick={() => onOpen(c.id)} style={{ cursor: "pointer" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ fontFamily: displayFont, fontWeight: 600, fontSize: "17px", color: T.ink }}>{c.name}</div>
+                    <span style={{ background: T.gold, color: T.white, fontSize: "11px", fontWeight: 700, borderRadius: "999px", padding: "3px 9px", whiteSpace: "nowrap" }}>{days.length} day{days.length > 1 ? "s" : ""}</span>
+                  </div>
+                  <div style={{ color: T.muted, fontSize: "12.5px", marginTop: "3px" }}>{fmtLong(c.startDate)} – {fmtLong(c.endDate)}</div>
+                  <div style={{ display: "flex", gap: "8px", marginTop: "10px" }}>
+                    <span style={{ fontSize: "11.5px", color: T.kid, background: T.kidBg, border: `1px solid ${T.kidBorder}`, borderRadius: "8px", padding: "2px 8px", fontWeight: 600 }}>{kids} kid{kids !== 1 ? "s" : ""}</span>
+                    <span style={{ fontSize: "11.5px", color: T.adult, background: T.adultBg, border: `1px solid ${T.adultBorder}`, borderRadius: "8px", padding: "2px 8px", fontWeight: 600 }}>{adults} adult{adults !== 1 ? "s" : ""}</span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "8px", marginTop: "12px", borderTop: `1px dashed ${T.line}`, paddingTop: "10px" }}>
+                  <IconBtn onClick={() => onEdit(c.id)} icon={<Pencil size={14} />} label="Edit" />
+                  {confirmId === c.id ? (
+                    <>
+                      <button onClick={() => doDelete(c.id)} style={{ flex: 1, background: T.maroon, color: T.white, border: "none", borderRadius: "9px", padding: "7px 0", fontSize: "12.5px", fontWeight: 700, cursor: "pointer" }}>Confirm delete</button>
+                      <button onClick={() => askDelete(null)} style={{ background: "transparent", border: `1px solid ${T.line}`, color: T.muted, borderRadius: "9px", padding: "7px 10px", fontSize: "12.5px", cursor: "pointer" }}>Cancel</button>
+                    </>
+                  ) : (
+                    <IconBtn onClick={() => askDelete(c.id)} icon={<Trash2 size={14} />} label="Delete" danger />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <Fab onClick={onAdd} label="New crusade" />
+    </>
+  );
+}
+
+function IconBtn({ onClick, icon, label, danger }) {
+  return (
+    <button onClick={onClick} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", background: "transparent", border: `1px solid ${danger ? "#E3B8B8" : T.line}`, color: danger ? T.maroon : T.inkSoft, borderRadius: "9px", padding: "7px 0", fontSize: "12.5px", fontWeight: 600, cursor: "pointer" }}>
+      {icon} {label}
+    </button>
+  );
+}
+function Fab({ onClick, label }) {
+  return (
+    <button onClick={onClick} aria-label={label} style={{ position: "absolute", right: "18px", bottom: "18px", width: "56px", height: "56px", borderRadius: "50%", background: T.gold, border: "none", color: T.white, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 20px rgba(201,147,47,0.5)", cursor: "pointer" }}>
+      <Plus size={26} />
+    </button>
+  );
+}
+
+/* ---------------------------------------------------------
+   CRUSADE FORM
+--------------------------------------------------------- */
+function CrusadeForm({ initial, onCancel, onSave }) {
+  const [name, setName] = useState(initial?.name || "");
+  const [startDate, setStartDate] = useState(initial?.startDate || isoToday());
+  const [numDays, setNumDays] = useState(initial ? daysBetweenInclusive(initial.startDate, initial.endDate) : 3);
+  const [kidsAgeLimit, setKidsAgeLimit] = useState(initial?.kidsAgeLimit ?? DEFAULT_KIDS_AGE_LIMIT);
+  const [error, setError] = useState("");
+  const endDate = addDays(startDate, Math.max(1, Number(numDays) || 1) - 1);
+
+  function handleSave() {
+    if (!name.trim()) { setError("Give this crusade a name."); return; }
+    if (!startDate) { setError("Pick a start date."); return; }
+    if (!numDays || Number(numDays) < 1) { setError("Duration must be at least 1 day."); return; }
+    if (kidsAgeLimit === "" || Number(kidsAgeLimit) < 0) { setError("Enter a valid kids age limit."); return; }
+    onSave({ name: name.trim(), startDate, endDate, kidsAgeLimit: Number(kidsAgeLimit) });
+  }
+
+  return (
+    <>
+      <Ribbon eyebrow={initial ? "Edit crusade" : "New crusade"} title={initial ? "Update details" : "Schedule a crusade"} onBack={onCancel} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "20px 18px" }}>
+        <Field label="Crusade name"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Citywide Harvest Crusade" style={inputStyle} /></Field>
+        <Field label="Start date"><input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} style={inputStyle} /></Field>
+        <Field label="Number of days"><input type="number" min="1" value={numDays} onChange={(e) => setNumDays(e.target.value)} style={inputStyle} /></Field>
+        <div style={{ background: T.kidBg, border: `1px solid ${T.kidBorder}`, borderRadius: "12px", padding: "12px 14px", fontSize: "13px", color: T.inkSoft, display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+          <Calendar size={16} color={T.kid} />
+          Runs <strong style={{ margin: "0 4px" }}>{fmtLong(startDate)}</strong> to <strong style={{ margin: "0 4px" }}>{fmtLong(endDate)}</strong>
+        </div>
+        <Field label="Kids age limit"><input type="number" min="0" value={kidsAgeLimit} onChange={(e) => setKidsAgeLimit(e.target.value)} placeholder="e.g. 12" style={inputStyle} /></Field>
+        <div style={{ background: T.adultBg, border: `1px solid ${T.adultBorder}`, borderRadius: "12px", padding: "12px 14px", fontSize: "13px", color: T.inkSoft, display: "flex", alignItems: "center", gap: "8px" }}>
+          <UserCircle2 size={16} color={T.adult} />
+          Ages <strong style={{ margin: "0 4px" }}>0–{kidsAgeLimit || 0}</strong> tag as <span style={{ color: T.kid, fontWeight: 700, margin: "0 4px" }}>KID</span>,
+          <strong style={{ margin: "0 4px" }}>{Number(kidsAgeLimit || 0) + 1}+</strong> tag as <span style={{ color: T.adult, fontWeight: 700, margin: "0 4px" }}>ADULT</span>
+        </div>
+        {error && <div style={{ color: T.maroon, fontSize: "12.5px", marginTop: "10px" }}>{error}</div>}
+      </div>
+      <FormFooter onCancel={onCancel} onSave={handleSave} saveLabel={initial ? "Save changes" : "Create crusade"} />
+    </>
+  );
+}
+function Field({ label, children }) {
+  return (<div style={{ marginBottom: "16px" }}><div style={{ fontSize: "12px", fontWeight: 700, color: T.inkSoft, marginBottom: "6px", letterSpacing: "0.02em" }}>{label}</div>{children}</div>);
+}
+const inputStyle = { width: "100%", boxSizing: "border-box", padding: "11px 13px", borderRadius: "10px", border: `1px solid ${T.line}`, background: T.card, color: T.ink, fontSize: "14.5px", fontFamily: bodyFont, outline: "none" };
+function FormFooter({ onCancel, onSave, saveLabel }) {
+  return (
+    <div style={{ display: "flex", gap: "10px", padding: "14px 18px", borderTop: `1px solid ${T.line}`, background: T.card }}>
+      <button onClick={onCancel} style={{ flex: 1, padding: "12px 0", borderRadius: "10px", border: `1px solid ${T.line}`, background: "transparent", color: T.inkSoft, fontWeight: 600, fontSize: "14px", cursor: "pointer" }}>Cancel</button>
+      <button onClick={onSave} style={{ flex: 1.4, padding: "12px 0", borderRadius: "10px", border: "none", background: T.ink, color: T.white, fontWeight: 700, fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "7px" }}>
+        <Save size={15} /> {saveLabel}
+      </button>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------
+   CRUSADE DETAIL
+--------------------------------------------------------- */
+const SORT_OPTIONS = [
+  { id: "name", label: "Name (A–Z)" }, { id: "presentToday", label: "Present today" },
+  { id: "perfect", label: "Perfect attendance" }, { id: "nameAndPresent", label: "A–Z + present today" },
+  { id: "nameAndPerfect", label: "A–Z + perfect attendance" }, { id: "age", label: "Age" },
+  { id: "kidsAdults", label: "Kids / Adults" },
+];
+
+function CrusadeDetail({ crusade, attendees, selectedDay, setSelectedDay, sortMode, setSortMode, groupFilter, setGroupFilter, searchQuery, setSearchQuery, onBack, onEditCrusade, onAddAttendee, onEditAttendee, onToggle, confirmDeleteAttendee, askDeleteAttendee, doDeleteAttendee, raffle, onOpenRaffle }) {
+  const days = getDayList(crusade);
+  const dayIndex = Math.max(0, days.indexOf(selectedDay));
+  const today = isoToday();
+  const limit = crusade.kidsAgeLimit;
+
+  function isPerfectSoFar(a) { for (let i = 0; i <= dayIndex; i++) if (!a.attendance[days[i]]) return false; return true; }
+
+  const filtered = attendees.filter((a) => {
+    if (groupFilter === "kids") { if (!isKid(a.age, limit)) return false; }
+    if (groupFilter === "adults") { if (isKid(a.age, limit)) return false; }
+    if (searchQuery.trim() && !a.name.toLowerCase().includes(searchQuery.trim().toLowerCase())) return false;
+    return true;
+  });
+
+  const sorted = useMemo(() => {
+    const list = [...filtered];
+    const byName = (a, b) => a.name.localeCompare(b.name);
+    switch (sortMode) {
+      case "name": return list.sort(byName);
+      case "presentToday": return list.sort((a, b) => (b.attendance[selectedDay] ? 1 : 0) - (a.attendance[selectedDay] ? 1 : 0));
+      case "perfect": return list.sort((a, b) => (isPerfectSoFar(b) ? 1 : 0) - (isPerfectSoFar(a) ? 1 : 0));
+      case "nameAndPresent": return list.sort((a, b) => { const p = (b.attendance[selectedDay] ? 1 : 0) - (a.attendance[selectedDay] ? 1 : 0); return p !== 0 ? p : byName(a, b); });
+      case "nameAndPerfect": return list.sort((a, b) => { const p = (isPerfectSoFar(b) ? 1 : 0) - (isPerfectSoFar(a) ? 1 : 0); return p !== 0 ? p : byName(a, b); });
+      case "age": return list.sort((a, b) => Number(a.age) - Number(b.age));
+      case "kidsAdults": return list.sort((a, b) => { const k = (isKid(a.age, limit) ? 0 : 1) - (isKid(b.age, limit) ? 0 : 1); return k !== 0 ? k : byName(a, b); });
+      default: return list;
+    }
+  }, [filtered, sortMode, selectedDay, dayIndex, limit, searchQuery]);
+
+  const kidsCount = attendees.filter((a) => isKid(a.age, limit)).length;
+  const adultsCount = attendees.length - kidsCount;
+
+  const presentAttendees = attendees.filter((a) => a.attendance[selectedDay]);
+  const presentKidsCount = presentAttendees.filter((a) => isKid(a.age, limit)).length;
+  const presentAdultsCount = presentAttendees.length - presentKidsCount;
+  const perfectCount = attendees.filter((a) => isPerfectSoFar(a)).length;
+
+  const eligiblePool = presentAttendees.filter((a) => { if (!raffle.allowKids && isKid(a.age, limit)) return false; if (!raffle.allowRepeat && raffle.winners.includes(a.id)) return false; return true; });
+
+  return (
+    <>
+      <Ribbon eyebrow={`${days.length} day crusade`} title={crusade.name} onBack={onBack}
+        right={<button onClick={onEditCrusade} aria-label="Edit crusade" style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "10px", padding: "7px", color: T.parchment, cursor: "pointer", display: "flex" }}><Pencil size={16} /></button>} />
+
+      <div style={{ display: "flex", gap: "6px", padding: "12px 14px 0", overflowX: "auto", background: T.parchment }}>
+        {days.map((d, i) => {
+          const active = d === selectedDay; const isToday = d === today;
+          return (
+            <button key={d} onClick={() => setSelectedDay(d)} style={{ flex: "0 0 auto", padding: "8px 13px 10px", borderRadius: "10px 10px 0 0", border: `1px solid ${active ? T.gold : T.line}`, borderBottom: active ? `1px solid ${T.card}` : `1px solid ${T.line}`, background: active ? T.card : T.parchmentDark, color: active ? T.ink : T.muted, fontWeight: active ? 700 : 500, fontSize: "12.5px", cursor: "pointer", position: "relative", top: "1px", whiteSpace: "nowrap" }}>
+              Day {i + 1} · {fmtShort(d)}
+              {isToday && <span style={{ position: "absolute", top: "3px", right: "5px", width: "5px", height: "5px", borderRadius: "50%", background: T.maroon }} />}
+            </button>
+          );
+        })}
+      </div>
+
+      <div style={{ background: T.card, borderBottom: `1px solid ${T.line}`, padding: "12px 14px" }}>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <button onClick={() => setGroupFilter(groupFilter === "kids" ? "all" : "kids")}><StatChip label="Kids" value={kidsCount} color={T.kid} bg={T.kidBg} border={T.kidBorder} active={groupFilter === "kids"} /></button>
+          <button onClick={() => setGroupFilter(groupFilter === "adults" ? "all" : "adults")}><StatChip label="Adults" value={adultsCount} color={T.adult} bg={T.adultBg} border={T.adultBorder} active={groupFilter === "adults"} /></button>
+        </div>
+        <div style={{ fontSize: "10.5px", fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: "0.06em", margin: "10px 0 6px" }}>Present today</div>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <StatChip label="Kids present" value={presentKidsCount} color={T.kid} bg={T.kidBg} border={T.kidBorder} />
+          <StatChip label="Adults present" value={presentAdultsCount} color={T.adult} bg={T.adultBg} border={T.adultBorder} />
+          <StatChip label="Perfect attendance" value={perfectCount} color={T.gold} bg="#FBF1DE" border="#EBD7A8" />
+        </div>
+      </div>
+
+      <div style={{ padding: "12px 14px 0" }}>
+        <button onClick={onOpenRaffle} style={{ width: "100%", display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", background: T.ink, border: "none", borderRadius: "14px", padding: "12px 14px", textAlign: "left" }}>
+          <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "rgba(201,147,47,0.18)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}><Gift size={18} color={T.gold} /></div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ color: T.white, fontFamily: displayFont, fontWeight: 600, fontSize: "14.5px" }}>Today's Raffle</div>
+            <div style={{ color: "#C7CEDB", fontSize: "11.5px" }}>{eligiblePool.length} eligible · {raffle.allowKids ? "kids can join" : "adults only"}</div>
+          </div>
+          <span style={{ background: T.gold, color: T.white, fontSize: "11.5px", fontWeight: 700, borderRadius: "999px", padding: "6px 12px", display: "flex", alignItems: "center", gap: "5px", flexShrink: 0 }}><Sparkles size={13} /> Spin</span>
+        </button>
+      </div>
+
+      <div style={{ padding: "10px 14px 0" }}>
+        <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+          <Search size={15} color={T.muted} style={{ position: "absolute", left: "12px", pointerEvents: "none" }} />
+          <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Search attendees by name…"
+            style={{ width: "100%", boxSizing: "border-box", padding: "9px 34px", borderRadius: "10px", border: `1px solid ${T.line}`, background: T.card, color: T.ink, fontSize: "13.5px", fontFamily: bodyFont, outline: "none" }} />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery("")} aria-label="Clear search" style={{ position: "absolute", right: "8px", background: "transparent", border: "none", color: T.muted, cursor: "pointer", padding: "4px", display: "flex" }}><X size={14} /></button>
+          )}
+        </div>
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 14px", background: T.parchment }}>
+        <ArrowUpDown size={14} color={T.muted} />
+        <select value={sortMode} onChange={(e) => setSortMode(e.target.value)} style={{ flex: 1, border: `1px solid ${T.line}`, borderRadius: "9px", padding: "7px 9px", fontSize: "12.5px", background: T.card, color: T.ink, fontFamily: bodyFont }}>
+          {SORT_OPTIONS.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+        </select>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "4px 14px 90px" }}>
+        {sorted.length === 0 && (
+          <div style={{ textAlign: "center", padding: "50px 20px", color: T.muted }}>
+            <Users size={32} style={{ margin: "0 auto 10px", opacity: 0.5 }} />
+            <div style={{ fontFamily: displayFont, fontSize: "16px", color: T.ink }}>No attendees yet</div>
+            <div style={{ fontSize: "13px" }}>Tap + to register someone for this crusade.</div>
+          </div>
+        )}
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
+          {sorted.map((a) => {
+            const kid = isKid(a.age, limit); const present = !!a.attendance[selectedDay]; const perfect = isPerfectSoFar(a);
+            return (
+              <div key={a.id} style={{ display: "flex", alignItems: "center", gap: "10px", background: T.card, borderRadius: "12px", padding: "10px 10px 10px 0", border: `1px solid ${T.line}`, overflow: "hidden" }}>
+                <div style={{ width: "5px", alignSelf: "stretch", background: kid ? T.kid : T.adult }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontWeight: 600, fontSize: "14.5px", color: T.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name}</span>
+                    {perfect && <span title="Perfect attendance so far" style={{ fontSize: "10px", background: T.gold, color: T.white, borderRadius: "999px", padding: "1px 6px", fontWeight: 700, whiteSpace: "nowrap" }}>★ perfect</span>}
+                  </div>
+                  <div style={{ display: "flex", gap: "6px", marginTop: "3px", alignItems: "center" }}>
+                    <span style={{ fontSize: "10.5px", fontWeight: 700, color: kid ? T.kid : T.adult, background: kid ? T.kidBg : T.adultBg, border: `1px solid ${kid ? T.kidBorder : T.adultBorder}`, borderRadius: "6px", padding: "1px 6px" }}>{kid ? "KID" : "ADULT"}</span>
+                    <span style={{ fontSize: "12px", color: T.muted }}>{a.age} yrs · {a.sex}</span>
+                  </div>
+                </div>
+                <button onClick={() => onEditAttendee(a.id)} aria-label="Edit attendee" style={{ background: "transparent", border: "none", color: T.muted, cursor: "pointer", padding: "6px" }}><Pencil size={15} /></button>
+                {confirmDeleteAttendee === a.id ? (
+                  <div style={{ display: "flex", gap: "4px" }}>
+                    <button onClick={() => doDeleteAttendee(a.id)} style={{ background: T.maroon, color: T.white, border: "none", borderRadius: "7px", padding: "5px 7px", fontSize: "11px", cursor: "pointer" }}>Del</button>
+                    <button onClick={() => askDeleteAttendee(null)} style={{ background: "transparent", border: `1px solid ${T.line}`, borderRadius: "7px", padding: "5px 7px", fontSize: "11px", cursor: "pointer", color: T.muted }}><X size={12} /></button>
+                  </div>
+                ) : (
+                  <button onClick={() => askDeleteAttendee(a.id)} aria-label="Delete attendee" style={{ background: "transparent", border: "none", color: T.muted, cursor: "pointer", padding: "6px" }}><Trash2 size={15} /></button>
+                )}
+                <button onClick={() => onToggle(a.id, selectedDay)} aria-label="Toggle attendance" style={{ width: "30px", height: "30px", borderRadius: "8px", flexShrink: 0, marginRight: "4px", border: `2px solid ${present ? T.gold : T.line}`, background: present ? T.gold : "transparent", color: T.white, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                  {present && <Check size={17} strokeWidth={3} />}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <Fab onClick={onAddAttendee} label="Add attendee" />
+    </>
+  );
+}
+
+function StatChip({ label, value, color, bg, border, active }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "5px", padding: "5px 10px", borderRadius: "999px", background: bg || "#F3EFE3", border: `1px solid ${active ? color : (border || T.line)}`, cursor: bg ? "pointer" : "default", boxShadow: active ? `0 0 0 2px ${color}33` : "none" }}>
+      <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: color }} />
+      <span style={{ fontSize: "12px", fontWeight: 700, color: T.ink }}>{value}</span>
+      <span style={{ fontSize: "11px", color: T.muted }}>{label}</span>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------
+   ATTENDEE FORM
+--------------------------------------------------------- */
+function AttendeeForm({ initial, crusade, onCancel, onSave }) {
+  const [name, setName] = useState(initial?.name || "");
+  const [age, setAge] = useState(initial?.age ?? "");
+  const [sex, setSex] = useState(initial?.sex || "M");
+  const [error, setError] = useState("");
+  const limit = crusade.kidsAgeLimit;
+
+  function handleSave() {
+    if (!name.trim()) { setError("Enter a name."); return; }
+    if (age === "" || Number(age) < 0) { setError("Enter a valid age."); return; }
+    onSave({ name: name.trim(), age: Number(age), sex });
+  }
+  const kid = age !== "" && isKid(age, limit);
+
+  return (
+    <>
+      <Ribbon eyebrow={initial ? "Edit attendee" : "New attendee"} title={initial ? "Update record" : "Register attendee"} onBack={onCancel} />
+      <div style={{ flex: 1, overflowY: "auto", padding: "20px 18px" }}>
+        <Field label="Full name"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Grace Owusu" style={inputStyle} /></Field>
+        <Field label="Age"><input type="number" min="0" value={age} onChange={(e) => setAge(e.target.value)} placeholder="e.g. 12" style={inputStyle} /></Field>
+        <Field label="Sex">
+          <div style={{ display: "flex", gap: "8px" }}>
+            {["M", "F"].map((s) => (
+              <button key={s} onClick={() => setSex(s)} style={{ flex: 1, padding: "11px 0", borderRadius: "10px", cursor: "pointer", border: `1px solid ${sex === s ? T.ink : T.line}`, background: sex === s ? T.ink : T.card, color: sex === s ? T.white : T.inkSoft, fontWeight: 700, fontSize: "13.5px" }}>{s === "M" ? "Male" : "Female"}</button>
+            ))}
+          </div>
+        </Field>
+        {age !== "" && (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "6px", background: kid ? T.kidBg : T.adultBg, border: `1px solid ${kid ? T.kidBorder : T.adultBorder}`, borderRadius: "12px", padding: "12px 14px", fontSize: "13px", color: T.inkSoft }}>
+            <UserCircle2 size={16} color={kid ? T.kid : T.adult} />
+            Will be tagged <strong style={{ color: kid ? T.kid : T.adult, margin: "0 4px" }}>{kid ? "KID" : "ADULT"}</strong> (this crusade's kids age limit is {limit})
+          </div>
+        )}
+        {error && <div style={{ color: T.maroon, fontSize: "12.5px", marginTop: "10px" }}>{error}</div>}
+      </div>
+      <FormFooter onCancel={onCancel} onSave={handleSave} saveLabel={initial ? "Save changes" : "Add attendee"} />
+    </>
+  );
+}
+
+/* ---------------------------------------------------------
+   RAFFLE MODAL
+--------------------------------------------------------- */
+function Switch({ checked, onChange, onColor }) {
+  return (
+    <button onClick={() => onChange(!checked)} style={{ width: "42px", height: "24px", borderRadius: "999px", border: "none", cursor: "pointer", background: checked ? (onColor || T.gold) : T.line, position: "relative", flexShrink: 0, transition: "background 0.2s" }}>
+      <span style={{ position: "absolute", top: "3px", left: checked ? "21px" : "3px", width: "18px", height: "18px", borderRadius: "50%", background: T.white, transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
+    </button>
+  );
+}
+
+function RaffleModal({ crusade, attendees, selectedDay, raffle, updateRaffle, onClose }) {
+  const limit = crusade.kidsAgeLimit;
+  const presentToday = attendees.filter((a) => a.attendance[selectedDay]);
+  const pool = presentToday.filter((a) => { if (!raffle.allowKids && isKid(a.age, limit)) return false; if (!raffle.allowRepeat && raffle.winners.includes(a.id)) return false; return true; });
+
+  const [rotation, setRotation] = useState(0);
+  const [spinning, setSpinning] = useState(false);
+  const [winner, setWinner] = useState(null);
+
+  const size = 260; const cx = size / 2, cy = size / 2, r = size / 2 - 4;
+  const n = Math.max(pool.length, 1); const segAngle = 360 / n;
+
+  function segColor(i) {
+    if (pool.length === 0) return T.line;
+    const kid = isKid(pool[i].age, limit);
+    const base = kid ? T.kid : T.adult; const light = kid ? T.kidLight : T.adultLight;
+    return i % 2 === 0 ? base : light;
+  }
+
+  function spin() {
+    if (pool.length === 0 || spinning) return;
+    setWinner(null);
+    const idx = Math.floor(Math.random() * pool.length);
+    const chosen = pool[idx];
+    const centerAngle = idx * segAngle + segAngle / 2;
+    const targetMod = (360 - centerAngle) % 360;
+    const currentMod = ((rotation % 360) + 360) % 360;
+    const delta = ((targetMod - currentMod) + 360) % 360;
+    const fullSpins = 5 + Math.floor(Math.random() * 3);
+    const nextRotation = rotation + delta + 360 * fullSpins;
+    setSpinning(true); setRotation(nextRotation);
+    setTimeout(() => {
+      setSpinning(false); setWinner(chosen);
+      if (!raffle.allowRepeat) updateRaffle({ winners: [...raffle.winners, chosen.id] });
+    }, 3200);
+  }
+  function resetToday() { updateRaffle({ winners: [] }); setWinner(null); }
+
+  return (
+    <div style={{ position: "absolute", inset: 0, background: T.parchment, borderRadius: "28px", display: "flex", flexDirection: "column", zIndex: 20 }}>
+      <Ribbon eyebrow={`Day ${fmtShort(selectedDay)} · resets daily`} title="Spin the Wheel" onBack={onClose} />
+      <div style={{ padding: "14px 18px 0", display: "flex", flexDirection: "column", gap: "10px" }}>
+        <Row label="Kids can join" hint={`under & at age ${limit} tag as kid`}><Switch checked={raffle.allowKids} onChange={(v) => { updateRaffle({ allowKids: v }); setWinner(null); }} onColor={T.kid} /></Row>
+        <Row label="Allow repeat winners" hint="off = each person wins once per day"><Switch checked={raffle.allowRepeat} onChange={(v) => updateRaffle({ allowRepeat: v })} onColor={T.adult} /></Row>
+      </div>
+      <div style={{ flex: 1, overflowY: "auto", padding: "10px 18px 24px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div style={{ fontSize: "12px", color: T.muted, margin: "4px 0 14px", textAlign: "center" }}>
+          {presentToday.length} present today · {pool.length} eligible to spin
+          {raffle.winners.length > 0 && !raffle.allowRepeat && ` · ${raffle.winners.length} already won`}
+        </div>
+        <div style={{ position: "relative", width: `${size}px`, height: `${size}px` }}>
+          <div style={{ position: "absolute", top: "-4px", left: "50%", transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "10px solid transparent", borderRight: "10px solid transparent", borderTop: `16px solid ${T.maroon}`, zIndex: 2 }} />
+          <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: `rotate(${rotation}deg)`, transition: spinning ? "transform 3.2s cubic-bezier(0.17, 0.67, 0.16, 0.99)" : "none", display: "block", borderRadius: "50%", filter: "drop-shadow(0 6px 14px rgba(30,42,66,0.35))" }}>
+            <circle cx={cx} cy={cy} r={r} fill={T.card} stroke={T.ink} strokeWidth="3" />
+            {pool.length === 0 ? (
+              <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" fontSize="12" fill={T.muted} fontFamily={bodyFont}>No one eligible</text>
+            ) : (
+              pool.map((p, i) => {
+                const start = i * segAngle, end = (i + 1) * segAngle, mid = start + segAngle / 2;
+                const p1 = polarPoint(cx, cy, r - 3, start); const p2 = polarPoint(cx, cy, r - 3, end);
+                const large = segAngle > 180 ? 1 : 0; const labelPos = polarPoint(cx, cy, r * 0.62, mid);
+                return (
+                  <g key={p.id}>
+                    <path d={`M ${cx} ${cy} L ${p1.x} ${p1.y} A ${r - 3} ${r - 3} 0 ${large} 1 ${p2.x} ${p2.y} Z`} fill={segColor(i)} stroke={T.card} strokeWidth="1.5" />
+                    {n <= 14 && (
+                      <text x={labelPos.x} y={labelPos.y} textAnchor="middle" dominantBaseline="middle" fontSize={n > 8 ? "8.5" : "10.5"} fontWeight="700" fill={T.white} fontFamily={bodyFont} transform={`rotate(${mid}, ${labelPos.x}, ${labelPos.y})`}>
+                        {p.name.length > 12 ? p.name.slice(0, 11) + "…" : p.name}
+                      </text>
+                    )}
+                  </g>
+                );
+              })
+            )}
+            <circle cx={cx} cy={cy} r={22} fill={T.ink} stroke={T.gold} strokeWidth="3" />
+          </svg>
+        </div>
+        <button onClick={spin} disabled={pool.length === 0 || spinning} style={{ marginTop: "22px", display: "flex", alignItems: "center", gap: "8px", background: pool.length === 0 || spinning ? T.muted : T.gold, color: T.white, border: "none", borderRadius: "999px", padding: "12px 26px", fontWeight: 700, fontSize: "14.5px", cursor: pool.length === 0 || spinning ? "default" : "pointer", boxShadow: "0 8px 18px rgba(201,147,47,0.4)" }}>
+          <RotateCw size={16} className={spinning ? "spin-icon" : ""} /> {spinning ? "Spinning…" : "Spin the Wheel"}
+        </button>
+        {winner && !spinning && (
+          <div style={{ marginTop: "18px", width: "100%", background: T.card, border: `1px solid ${T.gold}`, borderRadius: "14px", padding: "14px 16px", display: "flex", alignItems: "center", gap: "12px" }}>
+            <Sparkles size={22} color={T.gold} />
+            <div>
+              <div style={{ fontSize: "11px", color: T.muted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>Today's winner</div>
+              <div style={{ fontFamily: displayFont, fontWeight: 600, fontSize: "17px", color: T.ink }}>{winner.name}</div>
+              <span style={{ fontSize: "10.5px", fontWeight: 700, color: isKid(winner.age, limit) ? T.kid : T.adult, background: isKid(winner.age, limit) ? T.kidBg : T.adultBg, borderRadius: "6px", padding: "1px 6px" }}>{isKid(winner.age, limit) ? "KID" : "ADULT"} · {winner.age} yrs</span>
+            </div>
+          </div>
+        )}
+        {raffle.winners.length > 0 && <button onClick={resetToday} style={{ marginTop: "16px", background: "transparent", border: `1px solid ${T.line}`, color: T.muted, borderRadius: "9px", padding: "8px 14px", fontSize: "12px", cursor: "pointer" }}>Reset today's raffle</button>}
+      </div>
+      <style>{`.spin-icon { animation: spin-anim 0.9s linear infinite; } @keyframes spin-anim { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+function Row({ label, hint, children }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: T.card, border: `1px solid ${T.line}`, borderRadius: "12px", padding: "10px 14px" }}>
+      <div><div style={{ fontSize: "13.5px", fontWeight: 600, color: T.ink }}>{label}</div><div style={{ fontSize: "11px", color: T.muted }}>{hint}</div></div>
+      {children}
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<CrusadeAttendanceApp />);
+</script>
+</body>
+</html>
